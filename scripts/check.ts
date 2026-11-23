@@ -10,6 +10,14 @@ import { join } from "node:path";
 import { validate, formatReport } from "../packages/sdk-js/src/index.ts";
 import { demoFetch, DEMO_BASE } from "./demo-fetch.ts";
 
+/** The Python interpreter for cross-language checks: $PYTHON, else python3, else python (issue #4). */
+function python(): string {
+  for (const cmd of [process.env.PYTHON, "python3", "python"].filter(Boolean) as string[]) {
+    try { execFileSync(cmd, ["--version"], { stdio: "ignore" }); return cmd; } catch { /* try the next */ }
+  }
+  throw new Error("No Python found. The gate needs Python 3.10+ with cryptography and defusedxml (pip install -e packages/sdk-py); set PYTHON to pick one.");
+}
+
 const root = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 const fetcher = demoFetch();
 let failures = 0;
@@ -73,7 +81,7 @@ for (const [file, as] of [["minimal-card.json", "https://agent.example.com/.well
 
 // 3. Cross-language: Python verifies what JS signed.
 try {
-  const out = execFileSync("python", [join(root, "scripts", "check_py.py")], { encoding: "utf8" });
+  const out = execFileSync(python(), [join(root, "scripts", "check_py.py")], { encoding: "utf8" });
   process.stdout.write(out);
   ok(/ALL VERIFIED/.test(out), "Python SDK verifies every demo entry");
 } catch (e: any) {

@@ -2,6 +2,17 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { buildFeed, entry, generateKey, keyFromJwk, parseFeed, verifyEntry } from "../src/index.ts";
+import { fileURLToPath } from "node:url";
+
+/** The Python interpreter for cross-language checks: $PYTHON, else python3, else python (issue #4). */
+function python(): string {
+  for (const cmd of [process.env.PYTHON, "python3", "python"].filter(Boolean) as string[]) {
+    try { execFileSync(cmd, ["--version"], { stdio: "ignore" }); return cmd; } catch { /* try the next */ }
+  }
+  throw new Error("No Python found. The gate needs Python 3.10+ with cryptography and defusedxml (pip install -e packages/sdk-py); set PYTHON to pick one.");
+}
+/** The in-repo Python SDK, so the gate never depends on an installed rssa. */
+const SDK_PY = fileURLToPath(new URL("../../sdk-py", import.meta.url));
 
 for (const format of ["atom", "rss", "json"] as const) {
   test(`buildFeed ${format}: every entry round-trips and verifies`, async () => {
@@ -33,7 +44,7 @@ for f in ["atom", "rss", "json"]:
     out[f] = rssa.build_feed("https://x.example/feed." + f, "X", [q], key=k, card_url="https://x.example/card.json", format=f)
 print(json.dumps(out))
 `;
-  const out = JSON.parse(execFileSync("python", ["-c", py], { encoding: "utf8", env: { ...process.env, PYTHONIOENCODING: "utf-8" } }));
+  const out = JSON.parse(execFileSync(python(), ["-c", py], { encoding: "utf8", env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHONPATH: [SDK_PY, process.env.PYTHONPATH].filter(Boolean).join(process.platform === "win32" ? ";" : ":") } }));
   for (const f of ["atom", "rss", "json"]) {
     const p = parseFeed(out[f]);
     assert.equal(p.entries.length, 1, f);

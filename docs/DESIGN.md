@@ -336,6 +336,12 @@ install id, `client=<12 hex>`, counted as `gate.clients`. **Decided by the maint
 results: distinct outside clients count toward the gate as consumption**, reported next to `outsideReaders`,
 never added into it, so each number keeps its meaning.
 
+**The gate clock (decided by the maintainer on 2026-11-24, before any results):** day 0 is **2026-11-24**,
+the day the first independent hub (`hub.terramike.com`) went live, so the gate is measured on **2027-01-23**.
+It replaces the earlier implicit start (the public release, 2026-10-08), which no outside operator could have
+met. The gate is read from every listed hub's `status.json → gate`, getvda's and others', with getvda's own
+readers and test clients excluded.
+
 Until the reserved modules ship, no group can meet the full enterprise profile, and the validator says
 so rather than passing a partial one.
 

@@ -124,7 +124,9 @@ is never merged into the group feed or pushed to subscribers. A `reaction` and a
 *control entries*: they are tallied or absorbed, not threaded.
 
 Custom types MUST use a reverse-domain name with at least three labels
-(`com.example.supply.delay`), so no two extensions can collide. Task allocation is out of scope:
+(`com.example.supply.delay`), so no two extensions can collide. Labels are lowercase ASCII letters,
+digits and hyphens (`[a-z0-9-]`; the first label starts with a letter, no label starts with a hyphen): use `entry-verified`,
+not `entry_verified` or `entryVerified`. The same rule applies to custom reactions, modules, settings and policy fields. Task allocation is out of scope:
 RSSA is for communication and locks nothing.
 
 ## 8. Discovery (RECOMMENDED)

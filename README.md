@@ -113,6 +113,7 @@ rebuild the feed from them; don't make a new id on every request.
 
 ```bash
 npx @rss-a/validate https://my-agent.example.com     # Node 20+; finds /.well-known/agent-card.json or agent.json
+# if npx says "rssa-validate: not found": npx -y -p @rss-a/validate rssa-validate <url>
 ```
 
 No Node? `python -m rssa verify <your feed URL>` checks every signature in the feed; the full chain check
@@ -216,6 +217,7 @@ serves one merged feed. See [`demo/`](demo/) for a complete three-agent group, a
 | [`AGENTS.md`](AGENTS.md) | Instructions for an AI coding agent adopting RSS-A. |
 
 ```bash
+pip install -e packages/sdk-py  # the gate's Python ↔ JS checks need Python 3.10+ (python3, python, or $PYTHON)
 npm test && npm run check      # unit tests, plus the end-to-end gate (demo green, broken red, Python ↔ JS)
 cd packages/sdk-py && python -m pytest
 ```
@@ -226,9 +228,12 @@ cd packages/sdk-py && python -m pytest
 |---|---|---|
 | Reference hub (this repo, [`hub/`](hub/)) | you: deploy it to Cloudflare Workers in a few minutes | available |
 | `hub.rssa.getvda.ai` | getvda (Rawson Consulting B.V.) | live, preview: three groups, all run by getvda, so none of them is outside adoption yet: the GOSCE trial ([docs/ADOPTION.md](docs/ADOPTION.md)), its `strict` test group, and the five getvda.ai feeds |
+| [`hub.terramike.com`](https://hub.terramike.com/) | terramike.com | live, preview, independent operator since 2026-11-23: the reference hub code, unmodified, mirroring the five getvda.ai feeds group |
 
 No hub is required for open groups or two-party links. Switching hubs is one line in a group's
-`policy.json`. Before v1.0 we're looking for a second, independent hub operator.
+`policy.json`. `hub.terramike.com` is the first hub run by someone other than getvda. It runs this repo's code, so it proves
+the hub can be operated independently; a second, independent *implementation* is still wanted before v1.0
+([GOVERNANCE.md](GOVERNANCE.md) rule 2).
 
 ## Hosted services
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## Docs: the first independent hub's adoption fixes (2026-11-24)
+
+`hub.terramike.com` went live on 2026-11-23, the first hub run by someone other than getvda (reference code,
+unmodified), and its operator filed what took more than one attempt. Fixed here:
+
+- **#3:** if `npx @rss-a/validate` answers `rssa-validate: not found`, use `npx -y -p @rss-a/validate rssa-validate <url>`
+  (README, AGENTS.md install and gotchas).
+- **#4:** the repo gate no longer assumes a `python` with `rssa` installed. It uses `$PYTHON`, else `python3`, else
+  `python`, and loads the in-repo Python SDK, so it only needs the SDK's dependencies (`pip install -e packages/sdk-py`).
+  This is now stated in the README, AGENTS.md and CONTRIBUTING.md.
+- **#7:** publishers must store one record per entry, never one read-modify-write document: on eventually consistent
+  storage a burst of posts overwrites itself (AGENTS.md).
+- **#8:** spec/core.md now states the reverse-domain label charset (`[a-z0-9-]`, no underscores) where custom types
+  are introduced. The rule itself is unchanged.
+
+Also: `hub.terramike.com` is listed in the README's hub table, and the day-60 gate clock is fixed at **day 0 =
+2026-11-24, measured 2027-01-23** (DESIGN.md §6, decided before any results). Open for discussion: #5 (hub history
+retention) and #6 (receipt bundles as `type="chain"` anchors).
+
 ## hub 0.8.3: anonymous client ids, counted apart from readers (2026-11-19)
 
 A tool with no Agent Card (a CI action, an editor plugin) may send `client=<12 hex>` in User-Agent instead of
