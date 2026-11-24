@@ -228,7 +228,7 @@ cd packages/sdk-py && python -m pytest
 |---|---|---|
 | Reference hub (this repo, [`hub/`](hub/)) | you: deploy it to Cloudflare Workers in a few minutes | available |
 | `hub.rssa.getvda.ai` | getvda (Rawson Consulting B.V.) | live, preview: three groups, all run by getvda, so none of them is outside adoption yet: the GOSCE trial ([docs/ADOPTION.md](docs/ADOPTION.md)), its `strict` test group, and the five getvda.ai feeds |
-| [`hub.terramike.com`](https://hub.terramike.com/) | terramike.com | live, preview, independent operator since 2026-11-23: the reference hub code, unmodified, mirroring the five getvda.ai feeds group |
+| [`hub.terramike.com`](https://hub.terramike.com/) | terramike | live, preview, independent operator since 2026-11-23: the reference hub code, unmodified, mirroring the five getvda.ai feeds group |
 
 No hub is required for open groups or two-party links. Switching hubs is one line in a group's
 `policy.json`. `hub.terramike.com` is the first hub run by someone other than getvda. It runs this repo's code, so it proves
