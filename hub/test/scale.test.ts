@@ -132,3 +132,42 @@ test("/validate can check the hub's own merged feed (answered in-process, not ov
   const report = await (await hub.handle(new Request(`https://hub.test/validate?url=${target}`))).json() as any;
   assert.equal(report.ok, true, JSON.stringify(report.findings?.filter((f: any) => f.level === "fail")));
 });
+
+test("status.json reports retention, and two hubs on one group hold the same entries above the later floor (#5)", async () => {
+  const small = await buildGroup(2, 3);
+  const s = setup(small);
+  const { id: sid } = await s.hub.register(POLICY);
+  await s.hub.refresh(sid);
+  const st = (await (await s.hub.handle(new Request(`https://hub.test/g/${sid}/status.json`))).json()) as any;
+  assert.equal(st.retention.maxEntries, 500);
+  assert.equal(st.retention.maxBytes, 10 * 1024 * 1024);
+  assert.equal(st.retention.floor, null, "below capacity: no floor");
+  assert.equal(st.retention.since, new Date(T0 + 86_400_000).toISOString(), "since = the first refresh");
+
+  const g = await buildGroup(30, 20, { etags: false }); // 600 entries, over maxEntries
+  const a = setup(g), b = setup(g);
+  const { id } = await a.hub.register(POLICY);
+  await b.hub.register(POLICY);
+  b.tick(3_600_000); // the second hub starts an hour later
+  await a.hub.refresh(id);
+  await b.hub.refresh(id);
+  const view = async (hub: Hub) => {
+    const status = (await (await hub.handle(new Request(`https://hub.test/g/${id}/status.json`))).json()) as any;
+    const xml = await (await hub.handle(new Request(`https://hub.test/g/${id}/feed.atom`))).text();
+    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => ({
+      id: /<id>(.*?)<\/id>/.exec(m[1])![1], updated: /<updated>(.*?)<\/updated>/.exec(m[1])![1], body: m[1],
+    }));
+    return { status, entries };
+  };
+  const va = await view(a.hub), vb = await view(b.hub);
+  for (const v of [va, vb]) {
+    assert.equal(v.status.entries, 500);
+    const oldest = v.entries.map((e) => Date.parse(e.updated)).reduce((x, y) => Math.min(x, y));
+    assert.equal(Date.parse(v.status.retention.floor), oldest, "floor = the oldest entry still held");
+  }
+  // Every member feed still serves every entry here, so `since` excuses nothing: compare above the later floor.
+  const line = Math.max(Date.parse(va.status.retention.floor), Date.parse(vb.status.retention.floor));
+  const above = (v: typeof va) => v.entries.filter((e) => Date.parse(e.updated) > line).map((e) => e.id + "\n" + e.body).sort();
+  assert.ok(above(va).length > 0);
+  assert.deepEqual(above(va), above(vb), "identical above the later floor");
+});

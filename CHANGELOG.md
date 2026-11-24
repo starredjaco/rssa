@@ -1,5 +1,19 @@
 # Changelog
 
+## hub 0.8.4: retention in status.json; a merged feed is a window, not an archive (2026-11-25)
+
+Decided on #5, raised by the first independent hub: `hub.terramike.com` and the reference hub, serving the same
+group, held 373 and 500 entries on day one and converged to 500 each as old entries aged out of both.
+
+- **Hub:** a group's `status.json` now has `retention: { maxEntries, maxBytes, floor, since }`. `floor` is the
+  `updated` time of the oldest entry held once the group is at capacity (null below it); `since` is when this hub
+  first refreshed the group (for groups that existed before 0.8.4, the first refresh after upgrading).
+- **Spec (groups.md §4):** readers must not treat a merged feed as complete history; member feeds are the source of
+  truth, and publishers who want history serve RFC 5005 archives. Two hubs on the same group must hold identical
+  entries above the later of their two floors, except entries no longer served that predate the later hub's `since`.
+  This is a cross-hub conformance check the two live hubs can run against each other.
+- **Test:** two hubs on one 600-entry group report their floors and hold identical entries above the later floor.
+
 ## Docs: the first independent hub's adoption fixes (2026-11-24)
 
 `hub.terramike.com` went live on 2026-11-23, the first hub run by someone other than getvda (reference code,

@@ -114,6 +114,8 @@ interface Meta {
   reactions: Record<string, Record<string, number>>;
   /** When the group is at capacity: the updated time of the oldest retained entry (only moves forward). */
   floor?: string;
+  /** When this hub first refreshed the group (issue #5): it holds nothing published before it began, unless a feed still serves it. */
+  since?: number;
   refreshedAt?: number;
   feedEtag?: string;
   xmlChunks?: number;
@@ -463,6 +465,7 @@ export class Group {
     const f = await this.loadFull();
     const now = this.c.now();
     this.stats.refreshes++;
+    m.since ??= now;
 
     // 1. Policy: the group's single source of truth. A bad new version never replaces a good one.
     // Reloaded on every full poll; a ping for one member reuses the loaded policy.
@@ -937,6 +940,8 @@ export class Group {
             ...x, lastFetch: this.lastFetch.get(x.feed), ...this.live(f, x.feed),
           })),
           entries: f.entries.length, rejected: m.rejected.slice(0, 20),
+          // The merged feed is a bounded window, not an archive (groups.md §4, issue #5).
+          retention: { maxEntries: this.c.maxEntries, maxBytes: ENTRY_BYTES, floor: m.floor ?? null, since: m.since ? new Date(m.since).toISOString() : null },
           gate: { readers: readers.length, outsideReaders: readers.filter((r) => !memberCards.has(r)).length, websubSubscribers: subs.length, clients,
             ...(capped.length ? { capped: Object.fromEntries(capped) } : {}) },
         });

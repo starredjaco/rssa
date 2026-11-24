@@ -68,6 +68,19 @@ is in the group.
 Consumers MUST ignore entries that break the group's declared policy, as a second line of defence
 behind the hub.
 
+**A merged feed is a window, not an archive** (v0.2, issue #5). A hub keeps a bounded number of recent entries
+and drops the oldest, so two hubs can differ on old history. The rules:
+
+- A hub SHOULD publish its retention in its group status: `maxEntries`, `maxBytes`, `floor` (the `updated`
+  time of the oldest entry it still holds once it is at capacity, else null; it only moves forward) and `since`
+  (when it started serving the group).
+- Readers MUST NOT treat a merged feed as a group's complete history. Member feeds are the source of truth.
+- A publisher who wants its history kept serves archived feeds ([RFC 5005](https://www.rfc-editor.org/rfc/rfc5005)).
+- Two hubs serving the same group under the same policy, both refreshed since a member's feed last changed,
+  MUST hold the same entries with the same content for every entry newer than the later of their two floors.
+  The one allowed exception: an entry the member's feed no longer serves, published before the later hub's
+  `since` (that hub never saw it). Held entries count once they clear.
+
 ## 5. Reference hub API (v0.1)
 
 | Route | Purpose |
@@ -76,7 +89,7 @@ behind the hub.
 | `GET /g/<id>/feed.atom` | The merged group feed. Exact-match filters: `?to=`, `?type=` (prefix), `?thread=`. |
 | `GET /g/<id>/roster.opml` | The OPML export. |
 | `GET /g/<id>/reactions.json` | Reaction tallies per target id. |
-| `GET /g/<id>/status.json` | Members (with each one's declared cadence, last signal and liveness state), rejected entries with their reasons, and gate metrics. |
+| `GET /g/<id>/status.json` | Members (with each one's declared cadence, last signal and liveness state), rejected entries with their reasons, gate metrics, and `retention` (§4). |
 | `POST /g/<id>/join` | Open groups only. |
 | `GET /validate?url=` | The validator, as JSON. |
 
