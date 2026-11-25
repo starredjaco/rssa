@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Hub, memoryStore } from "../src/hub.ts";
-import { keyFromSeed } from "../../packages/sdk-js/src/index.ts";
+import { keyFromSeed, signPolicy } from "../../packages/sdk-js/src/index.ts";
 import { POLICY, T0, buildGroup, cardUrl, entryFor, feedUrl, publish, seed, type Group } from "../../scripts/synthetic.ts";
 
 const memStore = memoryStore;
@@ -188,4 +188,20 @@ test("a group that predates hub 0.8.4 gets `since` from its acceptance records, 
   await upgraded.refresh(id);
   const st = (await (await upgraded.handle(new Request(`https://hub.test/g/${id}/status.json`))).json()) as any;
   assert.equal(st.retention.since, new Date(T0 + 86_400_000).toISOString(), "since = the first acceptance, not the upgrade");
+});
+
+test("status.json says when a standard policy has no hub, and still serves the group", async () => {
+  const g = await buildGroup(2, 2);
+  const { hub } = setup(g);
+  const { id } = await hub.register(POLICY);
+  await hub.refresh(id);
+  const ok = (await (await hub.handle(new Request(`https://hub.test/g/${id}/status.json`))).json()) as any;
+  assert.equal(ok.policyProblem, undefined, "a policy that names its hub has no problem");
+  const p = JSON.parse(g.web.docs.get(POLICY)!);
+  delete p.hub; delete p.sig; p.version = 2;
+  g.web.docs.set(POLICY, JSON.stringify(await signPolicy(p, await keyFromSeed(seed(99_999)))));
+  await hub.refresh(id);
+  const st = (await (await hub.handle(new Request(`https://hub.test/g/${id}/status.json`))).json()) as any;
+  assert.match(st.policyProblem ?? "", /requires "hub"/);
+  assert.equal(st.entries, 4, "the group is still served");
 });

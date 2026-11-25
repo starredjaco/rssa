@@ -8,6 +8,10 @@ claims the hub started later than it did, which excuses too much under the group
 `since` is now bounded, once, by the hub's own records: the earliest acceptance in its member tracks (which outlive
 evicted entries) and retained entries. It is never later than before.
 
+Also from the live sweep: the validator fails a `standard` or `strict` policy with no `hub` (groups.md §2), but the
+hub served it silently, so an operator had no way to see the problem. `status.json` now says so in `policyProblem`;
+the group is still served. The synthetic test policy now names its hub too.
+
 ## hub 0.8.4: retention in status.json; a merged feed is a window, not an archive (2026-11-25)
 
 Decided on #5, raised by the first independent hub: `hub.terramike.com` and the reference hub, serving the same

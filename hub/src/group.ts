@@ -489,7 +489,13 @@ export class Group {
         if (m.policy && p.version < m.policy.version) throw new Error(`policy version ${p.version} is older than ${m.policy.version}; keeping the newer one`);
         m.policy = p;
         m.policySigned = v.ok;
-        m.policyProblem = v.ok ? undefined : `unsigned policy accepted because the preset is open (${v.error})`;
+        // Problems the validator fails a policy on but the hub can live with: say so in status.json, never refuse.
+        const notes: string[] = [];
+        if (!v.ok) notes.push(`unsigned policy accepted because the preset is open (${v.error})`);
+        if (settings.hub === "required" && !/^https?:\/\/\S+$/.test(String(p.hub ?? ""))) {
+          notes.push(`preset ${p.preset ?? "standard"} requires "hub" in the policy (groups.md §2); served anyway, but readers and the validator reject it`);
+        }
+        m.policyProblem = notes.length ? notes.join("; ") : undefined;
       } catch (e) {
         m.policyProblem = (e as Error).message;
         if (!m.policy) { m.refreshedAt = now; await this.commit(); return []; }

@@ -75,7 +75,7 @@ export async function buildGroup(members: number, perFeed: number, o: { contentB
       { feed: feedUrl(i), modules: ["sign", "groups", "thread", "controls"], groups: [POLICY], keys: { keys: [key.publicJwk] } })));
   }
   const policy: GroupPolicy = {
-    version: 1, group: POLICY, name: `perf group (${members})`, owner: OWNER_JWKS, preset: "standard",
+    version: 1, group: POLICY, name: `perf group (${members})`, owner: OWNER_JWKS, preset: "standard", hub: "https://hub.test/",
     members: Array.from({ length: members }, (_, i) => ({ feed: feedUrl(i), role: i % 5 === 0 ? "ops" : "member" })),
     requiredModules: ["sign", "groups", "thread", "controls"],
   };
