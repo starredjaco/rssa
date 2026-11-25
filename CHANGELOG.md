@@ -1,5 +1,13 @@
 # Changelog
 
+## hub 0.8.5: `since` for groups older than 0.8.4 (2026-11-26)
+
+Found while checking the first cross-hub conformance run on #5 (hub.terramike.com vs the reference hub). 0.8.4 set
+`since` on the first refresh after upgrading, so every group that already existed reported the upgrade time. That
+claims the hub started later than it did, which excuses too much under the groups.md §4 exception. A group's
+`since` is now bounded, once, by the hub's own records: the earliest acceptance in its member tracks (which outlive
+evicted entries) and retained entries. It is never later than before.
+
 ## hub 0.8.4: retention in status.json; a merged feed is a window, not an archive (2026-11-25)
 
 Decided on #5, raised by the first independent hub: `hub.terramike.com` and the reference hub, serving the same
@@ -7,7 +15,7 @@ group, held 373 and 500 entries on day one and converged to 500 each as old entr
 
 - **Hub:** a group's `status.json` now has `retention: { maxEntries, maxBytes, floor, since }`. `floor` is the
   `updated` time of the oldest entry held once the group is at capacity (null below it); `since` is when this hub
-  first refreshed the group (for groups that existed before 0.8.4, the first refresh after upgrading).
+  first refreshed the group (for groups that existed before 0.8.4: see 0.8.5).
 - **Spec (groups.md §4):** readers must not treat a merged feed as complete history; member feeds are the source of
   truth, and publishers who want history serve RFC 5005 archives. Two hubs on the same group must hold identical
   entries above the later of their two floors, except entries no longer served that predate the later hub's `since`.

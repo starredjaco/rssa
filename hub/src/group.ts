@@ -116,6 +116,8 @@ interface Meta {
   floor?: string;
   /** When this hub first refreshed the group (issue #5): it holds nothing published before it began, unless a feed still serves it. */
   since?: number;
+  /** Set once `since` has been bounded by the hub's own acceptance records (hub 0.8.5). */
+  sinceChecked?: boolean;
   refreshedAt?: number;
   feedEtag?: string;
   xmlChunks?: number;
@@ -465,7 +467,14 @@ export class Group {
     const f = await this.loadFull();
     const now = this.c.now();
     this.stats.refreshes++;
-    m.since ??= now;
+    if (!m.sinceChecked) {
+      // Groups that predate hub 0.8.4 got `since` = the upgrade time, which excuses too much (#5). The earliest
+      // acceptance the hub recorded (member tracks outlive evicted entries) is a far better bound; never later.
+      const seen = [m.since, ...Object.values(f.members).map((st) => st.track?.firstSeen), ...f.entries.map((e) => e.acceptedAt)]
+        .filter((t): t is number => typeof t === "number" && Number.isFinite(t));
+      m.since = Math.min(now, ...seen);
+      m.sinceChecked = true;
+    }
 
     // 1. Policy: the group's single source of truth. A bad new version never replaces a good one.
     // Reloaded on every full poll; a ping for one member reuses the loaded policy.

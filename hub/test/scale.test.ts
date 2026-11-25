@@ -171,3 +171,21 @@ test("status.json reports retention, and two hubs on one group hold the same ent
   assert.ok(above(va).length > 0);
   assert.deepEqual(above(va), above(vb), "identical above the later floor");
 });
+
+test("a group that predates hub 0.8.4 gets `since` from its acceptance records, not the upgrade time (#5)", async () => {
+  const g = await buildGroup(2, 3);
+  const { hub, store } = setup(g);
+  const { id } = await hub.register(POLICY);
+  await hub.refresh(id); // first refresh: T0 + 24h
+  // Simulate a hub that ran before 0.8.4: no `since` stored, then a later upgrade stamped it with the upgrade time.
+  const key = `r:${id}:meta:`;
+  const meta = JSON.parse(store.m.get(key)!);
+  meta.since = T0 + 86_400_000 + 30 * 86_400_000;
+  delete meta.sinceChecked;
+  store.m.set(key, JSON.stringify(meta));
+  const t = T0 + 86_400_000 + 31 * 86_400_000;
+  const upgraded = new Hub({ store, fetch: g.web.fetcher, now: () => t, adminToken: "x", baseUrl: "https://hub.test" });
+  await upgraded.refresh(id);
+  const st = (await (await upgraded.handle(new Request(`https://hub.test/g/${id}/status.json`))).json()) as any;
+  assert.equal(st.retention.since, new Date(T0 + 86_400_000).toISOString(), "since = the first acceptance, not the upgrade");
+});
