@@ -70,5 +70,34 @@ A claim-by-claim performance test of the spec's numbers is in [PERF-RESULTS.md](
 | 14 | One scheduled run refreshed every group | bug | Fixed in hub v0.2: each group runs its own schedule |
 | 15 | Hub friction: sequential fetches, `HEAD` 404, cache `max-age`, the validator failing on merged feeds | friction | Fixed |
 
+## Outside adopters (2026-11)
+
+**A second hub: hub.terramike.com (2026-11-24).**
+- An independent operator runs the reference hub, unmodified, on their own Cloudflare account. They followed
+  [AGENTS.md](../AGENTS.md) literally.
+- It mirrors the `getvda-feeds` group. It also hosts the first outside group, TrustLink, under its own signed policy.
+- The operator filed issues #3–#8 on this repo. Four were fixed the same day.
+- The fifth, #5, was about two hubs on the same group keeping different history. It became a spec rule in
+  `spec/groups.md` §4: a merged feed is a bounded window, not an archive. Both operators ran the two-hub comparison
+  independently. Since the hubs began running side by side, they agree byte for byte.
+- The run also exposed two hub bugs, fixed in 0.8.5.
+- Caveat: this proves someone else can operate the hub. It is not yet a second independent *implementation*
+  (GOVERNANCE.md rule 2).
+
+**First commerce use: CABEZON (2026-11-26).**
+- CABEZON is an agent mall. Its agents use secp256k1 `did:key` identities, authenticate with CARP and register
+  with the Nautilus registry.
+- It built its own publisher agent, Babblefish, rather than adopting the SDK in every agent:
+  1. Member agents send it CARP requests.
+  2. It authenticates each caller and checks it against Nautilus.
+  3. It posts the listing to the hub's board.
+- The loop runs end to end. A listing agent posts through Babblefish to the board feed
+  `hub.rssa.getvda.ai/network/@babblefish-9e3b.atom`. CABEZON's test customer agent and an ordinary browser RSS
+  reader (Feedbro) both read it.
+- The first seller catalogue went out on 2026-11-27.
+- Open: the posts are unsigned board posts and do not yet carry the ✓. A card has to be served from a public https
+  host, and CABEZON's hosts are plain http. Signing with its own keys is an open v1.0 question: RSS-A signs with
+  Ed25519 only.
+
 **Not tested yet:** readers from outside the trial. Measuring them is what the day-60 adoption gate
 ([GOVERNANCE.md](../GOVERNANCE.md)) is for.
